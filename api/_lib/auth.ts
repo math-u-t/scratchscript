@@ -1,18 +1,19 @@
 /**
- * Clerk 認証ヘルパー
+ * Auth0 認証ヘルパー
  *
- * Edge Functions で Clerk の JWT を検証します
+ * Edge Functions で Auth0 の JWT を検証します
  */
 
-export interface ClerkUser {
+export interface Auth0User {
   userId: string
   userName: string
+  email?: string
 }
 
 /**
- * リクエストから Clerk のセッショントークンを検証してユーザー情報を取得
+ * リクエストから Auth0 のアクセストークンを検証してユーザー情報を取得
  */
-export async function verifyClerkToken(request: Request): Promise<ClerkUser | null> {
+export async function verifyAuth0Token(request: Request): Promise<Auth0User | null> {
   try {
     const authHeader = request.headers.get('authorization')
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -21,17 +22,9 @@ export async function verifyClerkToken(request: Request): Promise<ClerkUser | nu
 
     const token = authHeader.substring(7)
 
-    // Clerk の公開鍵で JWT を検証
-    // 本番環境では @clerk/backend を使用するか、JWK エンドポイントから公開鍵を取得して検証
-    const clerkSecretKey = process.env.CLERK_SECRET_KEY
-
-    if (!clerkSecretKey) {
-      throw new Error('CLERK_SECRET_KEY is not configured')
-    }
-
-    // 簡易実装: トークンをデコードしてユーザー情報を取得
-    // 実際には JWT を適切に検証する必要があります
-    const payload = await verifyJWT(token, clerkSecretKey)
+    // Auth0 の JWT を検証
+    // 本番環境では jwks-rsa と jsonwebtoken を使用して検証
+    const payload = await verifyJWT(token)
 
     if (!payload || !payload.sub) {
       return null
@@ -39,7 +32,8 @@ export async function verifyClerkToken(request: Request): Promise<ClerkUser | nu
 
     return {
       userId: payload.sub,
-      userName: payload.username || payload.email?.split('@')[0] || payload.sub
+      userName: payload.name || payload.nickname || payload.email?.split('@')[0] || payload.sub,
+      email: payload.email
     }
   } catch (error) {
     console.error('Token verification failed:', error)
@@ -49,9 +43,9 @@ export async function verifyClerkToken(request: Request): Promise<ClerkUser | nu
 
 /**
  * JWT を検証（簡易実装）
- * 本番環境では jose などのライブラリを使用してください
+ * 本番環境では jose や jsonwebtoken ライブラリを使用してください
  */
-async function verifyJWT(token: string, secret: string): Promise<any> {
+async function verifyJWT(token: string): Promise<any> {
   try {
     // JWT は header.payload.signature の形式
     const parts = token.split('.')
@@ -66,6 +60,11 @@ async function verifyJWT(token: string, secret: string): Promise<any> {
     if (payload.exp && payload.exp * 1000 < Date.now()) {
       throw new Error('Token expired')
     }
+
+    // Note: 本番環境では以下も必要:
+    // 1. Auth0 の公開鍵で署名を検証
+    // 2. issuer (iss) が正しいか確認
+    // 3. audience (aud) が正しいか確認
 
     return payload
   } catch (error) {

@@ -3,7 +3,7 @@
     <nav class="container mx-auto px-4 py-4">
       <div class="flex items-center justify-between">
         <!-- ロゴ -->
-        <router-link to="/" class="flex items-center space-x-2">
+        <router-link to="/" class="flex items-center space-x-2 no-underline">
           <span class="material-icons text-3xl text-indigo-600 dark:text-indigo-400">code</span>
           <span class="text-xl font-bold text-gray-900 dark:text-white">ScratchScript</span>
         </router-link>
@@ -54,12 +54,8 @@ const router = useRouter()
 
 async function handleSignOut() {
   try {
-    // Clerk のサインアウト
-    if ((window as any).Clerk) {
-      await (window as any).Clerk.signOut()
-    }
-    authStore.signOut()
-    router.push('/')
+    // Auth0 のサインアウト
+    await authStore.signOut()
   } catch (error) {
     console.error('Sign out failed:', error)
   }
