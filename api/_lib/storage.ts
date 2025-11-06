@@ -2,6 +2,9 @@
  * Vercel KV ストレージヘルパー
  *
  * プロジェクトとアップロードファイルを Vercel KV に保存・取得します
+ *
+ * 注: 2025年6月9日より、Vercel KV は Vercel Marketplace Storage 統合に置き換えられました。
+ * 自動アカウントプロビジョニングと統一された請求が特徴です。詳細: https://vercel.com/docs/storage
  */
 
 import { kv } from '@vercel/kv'
