@@ -26,7 +26,8 @@ Scratch 風のシンプルなスクリプト言語でプログラミングを学
 
 ### バックエンド
 - **Vercel Edge Functions**: API (Edge Runtime)
-- **Vercel KV**: データストレージ
+- **Vercel Marketplace Storage (KV)**: データストレージ (Redis互換のサーバーレスデータベース)
+  - 注: 2025年6月9日より、Vercel KV は Vercel Marketplace Storage 統合に置き換えられました
 - **Clerk**: 認証
 
 ### インフラ
@@ -120,7 +121,9 @@ npm install
 VITE_CLERK_PUBLISHABLE_KEY=pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 CLERK_SECRET_KEY=sk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
-# Vercel KV (Vercel が自動設定)
+# Vercel Marketplace Storage - KV (Redis互換)
+# 2025年6月9日より、Vercel KV は Vercel Marketplace Storage に統合
+# Vercel が自動設定 (自動アカウントプロビジョニング、統一請求)
 KV_URL=
 KV_REST_API_URL=
 KV_REST_API_TOKEN=
@@ -153,11 +156,13 @@ npm run dev
    vercel
    ```
 
-2. **Vercel KV を追加**
+2. **Vercel Marketplace Storage (KV) を追加**
    - Vercel Dashboard でプロジェクトを開く
-   - Storage タブから "Create Database" → "KV"
+   - Storage タブから "Create Database" または "Add Storage"
+   - Vercel Marketplace から Redis互換の KV ストレージを選択
    - データベース名を入力して作成
-   - 自動的に環境変数が設定されます
+   - 自動的にアカウントがプロビジョニングされ、環境変数が設定されます
+   - 注: 2025年6月9日より、Vercel Marketplace Storage 統合に移行
 
 3. **環境変数を設定**
    - Vercel Dashboard → Settings → Environment Variables
@@ -408,9 +413,10 @@ vercel --prod
 - Clerk のセッショントークンが正しく取得されているか確認
 - `CLERK_SECRET_KEY` が Vercel に設定されているか確認
 
-### KV エラー
-- Vercel KV が正しくプロジェクトに追加されているか確認
+### KV ストレージエラー
+- Vercel Marketplace Storage (KV) が正しくプロジェクトに追加されているか確認
 - 環境変数が自動設定されているか確認
+- 注: 2025年6月9日以降は Vercel Marketplace から KV ストレージを追加
 
 ### ビルドエラー
 ```bash
