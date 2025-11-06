@@ -42,7 +42,7 @@ const router = createRouter({
 })
 
 // 認証ガード
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
   if (to.meta.requiresAuth) {
     // Clerk の認証状態をチェック
     // 実際には Clerk の状態を確認する必要があります
