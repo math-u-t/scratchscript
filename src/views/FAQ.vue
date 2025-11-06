@@ -1,7 +1,9 @@
 <template>
   <div class="max-w-4xl mx-auto">
     <div class="text-center mb-12">
-      <span class="material-icons text-indigo-600 dark:text-indigo-400 text-6xl mb-4">help</span>
+      <div class="mb-4">
+        <span class="material-icons text-indigo-600 dark:text-indigo-400 text-6xl">help</span>
+      </div>
       <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">
         よくある質問
       </h1>

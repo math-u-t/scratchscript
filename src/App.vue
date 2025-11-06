@@ -16,6 +16,7 @@ import { useThemeStore } from '@/stores/theme'
 import { useAuthStore } from '@/stores/auth'
 import Header from '@/components/Header.vue'
 import Footer from '@/components/Footer.vue'
+import { Auth0Client } from '@auth0/auth0-spa-js'
 
 const themeStore = useThemeStore()
 const authStore = useAuthStore()
@@ -24,59 +25,64 @@ onMounted(() => {
   // テーマを初期化
   themeStore.initTheme()
 
-  // Clerk を初期化
-  initClerk()
+  // Auth0 を初期化
+  initAuth0()
 })
 
-async function initClerk() {
-  // Clerk の初期化
-  // 実際には @clerk/vue を使用
-  const publishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
+async function initAuth0() {
+  const domain = import.meta.env.VITE_AUTH0_DOMAIN
+  const clientId = import.meta.env.VITE_AUTH0_CLIENT_ID
 
-  if (!publishableKey) {
-    console.warn('Clerk publishable key not found')
+  if (!domain || !clientId) {
+    console.warn('Auth0 configuration not found')
     return
   }
 
   try {
-    // Clerk スクリプトを動的にロード
-    if (!(window as any).Clerk) {
-      await loadClerkScript()
-    }
-
-    const Clerk = (window as any).Clerk
-    await Clerk.load({
-      publishableKey
+    // Auth0 クライアントを初期化
+    const auth0 = new Auth0Client({
+      domain,
+      clientId,
+      authorizationParams: {
+        redirect_uri: window.location.origin,
+        audience: import.meta.env.VITE_AUTH0_AUDIENCE
+      },
+      cacheLocation: 'localstorage'
     })
 
-    // ユーザー情報を取得
-    if (Clerk.user) {
-      authStore.setUser(Clerk.user)
-      const token = await Clerk.session?.getToken()
-      authStore.setToken(token)
-    }
+    authStore.setAuth0Client(auth0)
 
-    // セッション変更を監視
-    Clerk.addListener((session: any) => {
-      if (session.user) {
-        authStore.setUser(session.user)
-      } else {
-        authStore.setUser(null)
+    // リダイレクト後のコールバックを処理
+    const query = window.location.search
+    if (query.includes('code=') && query.includes('state=')) {
+      try {
+        await auth0.handleRedirectCallback()
+        window.history.replaceState({}, document.title, '/')
+      } catch (error) {
+        console.error('Failed to handle redirect callback:', error)
       }
-    })
-  } catch (error) {
-    console.error('Failed to initialize Clerk:', error)
-  }
-}
+    }
 
-function loadClerkScript(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const script = document.createElement('script')
-    script.src = 'https://accounts.clerk.dev/npm/@clerk/clerk-js@latest/dist/clerk.browser.js'
-    script.async = true
-    script.onload = () => resolve()
-    script.onerror = reject
-    document.head.appendChild(script)
-  })
+    // 認証状態を確認
+    const isAuthenticated = await auth0.isAuthenticated()
+
+    if (isAuthenticated) {
+      // ユーザー情報を取得
+      const user = await auth0.getUser()
+      authStore.setUser(user || null)
+
+      // アクセストークンを取得
+      try {
+        const token = await auth0.getTokenSilently()
+        authStore.setToken(token)
+      } catch (error) {
+        console.error('Failed to get token:', error)
+      }
+    } else {
+      authStore.setUser(null)
+    }
+  } catch (error) {
+    console.error('Failed to initialize Auth0:', error)
+  }
 }
 </script>

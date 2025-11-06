@@ -1,24 +1,30 @@
 /**
  * 認証ストア
  *
- * Clerk の認証状態を管理
+ * Auth0 の認証状態を管理
  */
 
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { Auth0Client, User } from '@auth0/auth0-spa-js'
 
 export const useAuthStore = defineStore('auth', () => {
-  const user = ref<any>(null)
+  const user = ref<User | null>(null)
   const token = ref<string | null>(null)
   const isLoaded = ref(false)
+  const auth0Client = ref<Auth0Client | null>(null)
 
   const isAuthenticated = computed(() => !!user.value)
   const userName = computed(() => {
     if (!user.value) return null
-    return user.value.username || user.value.primaryEmailAddress?.emailAddress?.split('@')[0] || user.value.id
+    return user.value.name || user.value.nickname || user.value.email?.split('@')[0] || user.value.sub
   })
 
-  const setUser = (newUser: any) => {
+  const setAuth0Client = (client: Auth0Client) => {
+    auth0Client.value = client
+  }
+
+  const setUser = (newUser: User | null) => {
     user.value = newUser
     isLoaded.value = true
   }
@@ -27,7 +33,14 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = newToken
   }
 
-  const signOut = () => {
+  const signOut = async () => {
+    if (auth0Client.value) {
+      await auth0Client.value.logout({
+        logoutParams: {
+          returnTo: window.location.origin
+        }
+      })
+    }
     user.value = null
     token.value = null
   }
@@ -36,8 +49,10 @@ export const useAuthStore = defineStore('auth', () => {
     user,
     token,
     isLoaded,
+    auth0Client,
     isAuthenticated,
     userName,
+    setAuth0Client,
     setUser,
     setToken,
     signOut

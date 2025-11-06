@@ -9,7 +9,7 @@ Scratch 風のシンプルなスクリプト言語でプログラミングを学
 ### 主な機能
 
 - ✨ **シンプルな文法**: Scratch 風の直感的な文法（.scs 形式）
-- 🔐 **認証**: Clerk による GitHub / Email / Username+Password 認証
+- 🔐 **認証**: Auth0 による安全な認証 (Social / Email / Username+Password)
 - 💻 **ブラウザ実行**: Web Worker を使用した安全なサンドボックス実行
 - 🎨 **ダーク/ライトモード**: Material Design に準拠した美しい UI
 - 📤 **ファイルアップロード**: 最大 5KB までの画像・音声ファイル対応
@@ -28,7 +28,7 @@ Scratch 風のシンプルなスクリプト言語でプログラミングを学
 - **Vercel Edge Functions**: API (Edge Runtime)
 - **Vercel Marketplace Storage (KV)**: データストレージ (Redis互換のサーバーレスデータベース)
   - 注: 2025年6月9日より、Vercel KV は Vercel Marketplace Storage 統合に置き換えられました
-- **Clerk**: 認証
+- **Auth0**: 認証
 
 ### インフラ
 - **Vercel**: ホスティング・デプロイ
@@ -102,24 +102,26 @@ cd scratchscript
 npm install
 ```
 
-### 3. Clerk のセットアップ
+### 3. Auth0 のセットアップ
 
-1. [Clerk Dashboard](https://dashboard.clerk.com/) でアカウントを作成
-2. 新しいアプリケーションを作成
-3. 認証方法を設定:
-   - GitHub
-   - Email
-   - Username + Password
-4. API キーを取得
+1. [Auth0 Dashboard](https://manage.auth0.com/) でアカウントを作成
+2. 新しいアプリケーションを作成（Single Page Application を選択）
+3. 設定を行う:
+   - Allowed Callback URLs: `http://localhost:5173` (開発時)
+   - Allowed Logout URLs: `http://localhost:5173` (開発時)
+   - Allowed Web Origins: `http://localhost:5173` (開発時)
+4. Domain と Client ID を取得
 
 ### 4. 環境変数の設定
 
 `.env` ファイルを作成（`.env.example` を参考に）:
 
 ```env
-# Clerk Configuration
-VITE_CLERK_PUBLISHABLE_KEY=pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-CLERK_SECRET_KEY=sk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+# Auth0 Configuration
+VITE_AUTH0_DOMAIN=your-domain.auth0.com
+VITE_AUTH0_CLIENT_ID=your_client_id
+VITE_AUTH0_AUDIENCE=https://your-api-identifier
+AUTH0_CLIENT_SECRET=your_client_secret
 
 # Vercel Marketplace Storage - KV (Redis互換)
 # 2025年6月9日より、Vercel KV は Vercel Marketplace Storage に統合
@@ -142,7 +144,7 @@ npm run dev
 
 ### 前提条件
 - Vercel アカウント
-- Clerk アプリケーションのセットアップ完了
+- Auth0 アプリケーションのセットアップ完了
 - GitHub リポジトリ（推奨）
 
 ### 手順
@@ -168,9 +170,12 @@ npm run dev
    - Vercel Dashboard → Settings → Environment Variables
    - 以下を追加:
      ```
-     VITE_CLERK_PUBLISHABLE_KEY=pk_live_xxxxx
-     CLERK_SECRET_KEY=sk_live_xxxxx
+     VITE_AUTH0_DOMAIN=your-domain.auth0.com
+     VITE_AUTH0_CLIENT_ID=your_client_id
+     VITE_AUTH0_AUDIENCE=https://your-api-identifier
+     AUTH0_CLIENT_SECRET=your_client_secret
      ```
+   - Auth0 Dashboard で Allowed Callback URLs と Allowed Logout URLs に本番 URL を追加
 
 4. **デプロイ**
    ```bash
@@ -278,9 +283,9 @@ end
 ### 動作確認チェックリスト
 
 #### 1. 認証テスト
-- [ ] GitHub ログインが正常に動作する
-- [ ] Email ログインが正常に動作する
-- [ ] Username + Password ログインが正常に動作する
+- [ ] Auth0 ログインが正常に動作する
+- [ ] Social ログイン（設定している場合）が正常に動作する
+- [ ] Email / Password ログインが正常に動作する
 - [ ] ログアウトが正常に動作する
 
 #### 2. プロジェクト管理テスト
@@ -358,7 +363,7 @@ end
 ## セキュリティ
 
 ### 実装済み
-- ✅ Clerk JWT 検証（Edge Functions）
+- ✅ Auth0 JWT 検証（Edge Functions）
 - ✅ 編集権限チェック（managers リスト）
 - ✅ ファイルサイズ制限（5KB、サーバー側で強制）
 - ✅ ファイルタイプ制限（MIME タイプチェック）
@@ -405,13 +410,15 @@ vercel --prod
 
 ## トラブルシューティング
 
-### Clerk が読み込まれない
-- `VITE_CLERK_PUBLISHABLE_KEY` が正しく設定されているか確認
+### Auth0 ログインができない
+- `VITE_AUTH0_DOMAIN` と `VITE_AUTH0_CLIENT_ID` が正しく設定されているか確認
+- Auth0 Dashboard で Allowed Callback URLs が正しく設定されているか確認
 - ブラウザのコンソールでエラーを確認
 
 ### API が 401 エラーを返す
-- Clerk のセッショントークンが正しく取得されているか確認
-- `CLERK_SECRET_KEY` が Vercel に設定されているか確認
+- Auth0 のアクセストークンが正しく取得されているか確認
+- `AUTH0_CLIENT_SECRET` が Vercel に設定されているか確認
+- Auth0 Dashboard で API (Audience) が正しく設定されているか確認
 
 ### KV ストレージエラー
 - Vercel Marketplace Storage (KV) が正しくプロジェクトに追加されているか確認
