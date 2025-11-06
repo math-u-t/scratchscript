@@ -1,12 +1,12 @@
 /**
- * GET /api/project/:user/:slug
+ * GET /api/project/by-slug/:user/:slug
  *
  * 公開プロジェクトを取得（認証不要）
  */
 
 import type { NextRequest } from 'next/server'
-import { getProjectBySlug } from '../../_lib/storage'
-import { jsonResponse, errorResponse, corsHeaders } from '../../_lib/auth'
+import { getProjectBySlug } from '../../../_lib/storage'
+import { jsonResponse, errorResponse, corsHeaders } from '../../../_lib/auth'
 
 export const config = {
   runtime: 'edge'
